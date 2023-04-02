@@ -1,31 +1,20 @@
 #!/usr/bin/env bash
-
-# Install Nginx if it is not already installed
-if ! [ -x "$(command -v nginx)" ]; then
-    apt-get update
-    apt-get -y install nginx
-fi
-
-# Create necessary directories if they do not exist
-mkdir -p /data/web_static/{releases/test,shared}
-
-# Create HTML file with Holberton School message
-echo '<html>
+# Setup a web servers for the deployment of web_static.
+apt update -y
+apt install -y nginx
+mkdir -p /data/web_static/releases/test/
+mkdir -p /data/web_static/shared/
+echo "<!DOCTYPE html>
+<html>
   <head>
   </head>
   <body>
-    Holberton School
+    <p>Nginx server test</p>
   </body>
-</html>' > /data/web_static/releases/test/index.html
-
-# Create symbolic link to the /data/web_static/releases/test/ folder
+</html>" | tee /data/web_static/releases/test/index.html
 ln -sf /data/web_static/releases/test/ /data/web_static/current
+chown -R ubuntu:ubuntu /data
+sudo sed -i '39 i\ \tlocation /hbnb_static {\n\t\talias /data/web_static/current;\n\t}\n' /etc/nginx/sites-enabled/default
+sudo service nginx restart
 
-# Set ownership of /data/ directory to the ubuntu user and group
-chown -R ubuntu:ubuntu /data/
 
-# Update Nginx configuration to serve the content of /data/web_static/current/ to hbnb_static
-sed -i '/listen 80 default_server;/a \\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}\n' /etc/nginx/sites-available/default
-
-# Restart Nginx
-service nginx restart
